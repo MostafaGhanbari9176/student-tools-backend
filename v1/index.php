@@ -7,13 +7,15 @@
  */
 
 require '../vendor/autoload.php';
+
 use Slim\Http\Request;
 use Slim\Http\Response;
+
 require "presenter/StudentPresenter.php";
 
 $app = new \Slim\App();
 
-$app->get("/addStudent/{phone}/{sId}/{name}",function (Request $req, Response $res){
+$app->get("/addStudent/{phone}/{sId}/{name}", function (Request $req, Response $res) {
     $p = $req->getAttribute("phone");
     $s = $req->getAttribute("sId");
     $n = $req->getAttribute("name");
@@ -21,7 +23,7 @@ $app->get("/addStudent/{phone}/{sId}/{name}",function (Request $req, Response $r
     $res->getBody()->write("ok");
 });
 
-$app->post("/addStudent",function (Request $req, Response $res){
+$app->post("/addStudent", function (Request $req, Response $res) {
 
     $data = $req->getParsedBody();
 
@@ -33,6 +35,15 @@ $app->post("/addStudent",function (Request $req, Response $res){
     $res->getBody()->write("ok");
 });
 
+$app->post('/downStudentImg', function (Request $request, Response $response) {
 
+     $data = $request->getParsedBody()['ac'];
+     if($data === "Mostaf") {
+        $image = @file_get_contents("../files/img/img.jpg");
+    }else
+    $image = @file_get_contents("../files/img/denied.png");
+    $response->getBody()->write($image);
+
+});
 
 $app->run();
