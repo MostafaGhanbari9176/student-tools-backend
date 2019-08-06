@@ -21,13 +21,25 @@ $app->post("/addAbility", function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
-$app->post("/getAbilityList", function (Request $req, Response $res) {
+$app->post("/getMyList", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new AbilityPresenter())->getMyList($data);
+    $res->getBody()->write($result);
+});
+
+$app->post("/getList", function (Request $req, Response $res) {
     $data = $req->getParsedBody();
     $result = (new AbilityPresenter())->getList($data);
     $res->getBody()->write($result);
 });
 
-$app->post("/getAbility", function (Request $req, Response $res) {
+$app->post("/getMySingle", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new AbilityPresenter())->getMySingle($data);
+    $res->getBody()->write($result);
+});
+
+$app->post("/getSingle", function (Request $req, Response $res) {
     $data = $req->getParsedBody();
     $result = (new AbilityPresenter())->getSingle($data);
     $res->getBody()->write($result);

@@ -16,22 +16,22 @@ class Ability
         $this->con = (new DBConnection())->connect();
     }
 
-    public function add($phone, $subject, $resume, $description, $add_date):bool
+    public function add($userId, $subject, $resume, $description, $add_date):bool
     {
-        $sql = "INSERT INTO $this->tbName (phone, subject, resume, description, add_date) VALUES (?,?,?,?,?)";
+        $sql = "INSERT INTO $this->tbName (user_id, subject, resume, description, add_date) VALUES (?,?,?,?,?)";
         $result = $this->con->prepare($sql);
-        $result->bind_param('sssss', $phone, $subject, $resume, $description, $add_date);
+        $result->bind_param('issss', $userId, $subject, $resume, $description, $add_date);
         $data = $result->execute();
         $result->close();
         return $data;
 
     }
 
-    public function getList($phone):mysqli_result
+    public function getMyList($userId):mysqli_result
     {
-        $sql = "SELECT t.ability_id , t.subject From $this->tbName t WHERE t.phone = ?";
+        $sql = "SELECT t.ability_id , t.subject From $this->tbName t WHERE t.user_id = ? AND NOT t.status = 4";
         $result = $this->con->prepare($sql);
-        $result->bind_param('s',$phone );
+        $result->bind_param('i',$userId );
         $result->execute();
         $data = $result->get_result();
         $result->close();
@@ -39,11 +39,35 @@ class Ability
 
     }
 
+    public function getList($userId):mysqli_result
+    {
+        $sql = "SELECT t.ability_id , t.subject From $this->tbName t WHERE t.user_id = ? AND t.status = 1";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('i',$userId );
+        $result->execute();
+        $data = $result->get_result();
+        $result->close();
+        return $data;
+
+    }
+
+    public function getMySingle($userId, $ability_id):Array
+    {
+        $sql = "SELECT * From $this->tbName t WHERE t.ability_id = ? AND t.user_id = ? AND NOT t.status = 4";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('ii',$ability_id, $userId);
+        $result->execute();
+        $data = $result->get_result()->fetch_assoc();
+        $result->close();
+        return $data;
+
+    }
+
     public function getSingle($ability_id):Array
     {
-        $sql = "SELECT t.ability_id , t.subject From $this->tbName t WHERE t.ability_id = ?";
+        $sql = "SELECT * From $this->tbName t WHERE t.ability_id = ? AND t.status = 1";
         $result = $this->con->prepare($sql);
-        $result->bind_param('s',$ability_id );
+        $result->bind_param('i',$ability_id );
         $result->execute();
         $data = $result->get_result()->fetch_assoc();
         $result->close();
@@ -55,16 +79,16 @@ class Ability
     {
         $sql = "UPDATE $this->tbName SET subject = ? , resume = ? , description = ? , status = ? WHERE ability_id = ?";
         $result = $this->con->prepare($sql);
-        $result->bind_param('sssis', $subject, $resume, $description, $status, $ability_id);
+        $result->bind_param('sssii', $subject, $resume, $description, $status, $ability_id);
         $result->execute();
         $result->close();
     }
 
-    public function changeStatus($ability_id, $status)
+    public function changeStatus($userId, $ability_id, $status)
     {
-        $sql = "UPDATE $this->tbName SET status = ? WHERE ability_id = ?";
+        $sql = "UPDATE $this->tbName SET status = ? WHERE ability_id = ? AND user_id = ?";
         $result = $this->con->prepare($sql);
-        $result->bind_param('is', $status, $ability_id);
+        $result->bind_param('iii', $status, $ability_id, $userId);
         $result->execute();
         $result->close();
     }

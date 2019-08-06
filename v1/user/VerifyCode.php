@@ -37,13 +37,13 @@ class VerifyCode
         return $data;
     }
 
-    public function getCode($phone):String
+    public function getCode($phone):mysqli_result
     {
         $sql = "SELECT t.code FROM $this->tbName t WHERE t.phone = ?";
         $result = $this->con->prepare($sql);
         $result->bind_param('s', $phone);
         $result->execute();
-        $data = $result->get_result()->fetch_assoc()['code'];
+        $data = $result->get_result();
         $result->close();
         return $data;
     }

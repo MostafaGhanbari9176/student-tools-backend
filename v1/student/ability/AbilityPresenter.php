@@ -13,9 +13,9 @@ class AbilityPresenter
 {
     public function addAbility($data)
     {
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            (new Ability())->add($data['phone'], $data['subject'], $data['resume'], $data['description'], getJDate());
+            (new Ability())->add($userId, $data['subject'], $data['resume'], $data['description'], getJDate());
 
         } else
             $code = 400;//apiCodeError
@@ -25,15 +25,41 @@ class AbilityPresenter
 
     }
 
-    public function getList($data)
+    public function getMyList($data)
     {
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+        $list = array();
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            $result = (new Ability())->getList($data['phone']);
-            while ($row = $result->fetch_assoc()) $list[] = $row;
+            $result = (new Ability())->getMyList($userId);
+            while ($row = $result->fetch_assoc()) $list[] = json_encode($row);
         } else
             $code = 400;//apiCodeError
         $res = array("code" => $code, "data" => $list);
+        return json_encode($res);
+    }
+
+    public function getList($data)
+    {
+        $list = array();
+        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $code = 100;
+            $result = (new Ability())->getList($data['otherId']);
+            while ($row = $result->fetch_assoc()) $list[] = json_encode($row);
+        } else
+            $code = 400;//apiCodeError
+        $res = array("code" => $code, "data" => $list);
+        return json_encode($res);
+    }
+
+    public function getMySingle($data)
+    {
+        $result = array();
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $code = 100;
+            $result = (new Ability())->getMySingle($userId, $data['abilityId']);
+        } else
+            $code = 400;//apiCodeError
+        $res = array("code" => $code, "data" => array(json_encode($result)));
         return json_encode($res);
     }
 
@@ -42,10 +68,10 @@ class AbilityPresenter
         $result = array();
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            $result[] = (new Ability())->getSingle($data['ability_id']);
+            $result = (new Ability())->getSingle($data['abilityId']);
         } else
             $code = 400;//apiCodeError
-        $res = array("code" => $code, "data" => $result);
+        $res = array("code" => $code, "data" => array(json_encode($result)));
         return json_encode($res);
     }
 
@@ -54,7 +80,7 @@ class AbilityPresenter
 
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            (new Ability())->edit($data['ability_id'], $data['subject'], $data['resume'], $data['description'], 0/*dar entezar taeid*/);
+            (new Ability())->edit($data['abilityId'], $data['subject'], $data['resume'], $data['description'], 0/*dar entezar taeid*/);
 
         } else
             $code = 400;//apiCodeError
@@ -64,9 +90,9 @@ class AbilityPresenter
 
     public function changeStatus($data)
     {
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            (new Ability())->changeStatus($data['ability_id'], $data['code']);
+            (new Ability())->changeStatus($userId, $data['abilityId'], $data['status']);
 
         } else
             $code = 400;//apiCodeError

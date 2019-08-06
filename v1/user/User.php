@@ -29,7 +29,7 @@ class User
 
     public function get($phone):Array
     {
-        $sql="SELECT * FROM $this->tbName t WHERE t.phone = ?";
+        $sql="SELECT t.api_code , t.kind, t.phone FROM $this->tbName t WHERE t.phone = ?";
         $result = $this->con->prepare($sql);
         $result->bind_param('s', $phone);
         $result->execute();
@@ -59,6 +59,17 @@ class User
         return $data;
     }
 
+    public function getUserId($phone, $apiCode):mysqli_result
+    {
+        $sql="SELECT t.user_id FROM $this->tbName t WHERE t.phone = ? AND t.api_code = ?";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('ss', $phone, $apiCode);
+        $result->execute();
+        $data = $result->get_result();
+        $result->close();
+        return $data;
+    }
+
     public function getKind($phone):Int
     {
         $sql = "SELECT t.kind FROM $this->tbName WHERE t.phone = ?";
@@ -70,13 +81,13 @@ class User
         return $data;
     }
 
-    public function getPass($phone): String
+    public function getPass($phone): mysqli_result
     {
         $sql = "SELECT t.pass FROM $this->tbName t WHERE t.phone = ?";
         $result = $this->con->prepare($sql);
         $result->bind_param('s', $phone);
         $result->execute();
-        $data = $result->get_result()->fetch_assoc()['pass'];
+        $data = $result->get_result();
         $result->close();
         return $data;
     }
@@ -88,6 +99,17 @@ class User
         $result->bind_param('ss', $pass, $phone);
         $result->execute();
         $result->close();
+    }
+
+    public function getPhone($userId)
+    {
+        $sql = "SELECT t.phone FROM $this->tbName t WHERE t.user_id = ?";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('i', $userId);
+        $result->execute();
+        $data = $result->get_result()->fetch_assoc()['phone'];
+        $result->close();
+        return $data;
     }
 
 }

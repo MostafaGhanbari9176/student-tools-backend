@@ -16,9 +16,10 @@ class StudentProfilePresenter
 {
     public function add($data)
     {
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            (new StudentProfile())->add($data['sId'], $data['phone'], $data['name'], getJDate(), Date("H:i"));
+            (new StudentProfile())->add($data['sId'], $userId, $data['name'], getJDate(), Date("H:i"));
+            (new UserPresenter())->changePass($data);
         } else
             $code = 400;
         $res = array("code" => $code);
@@ -26,34 +27,46 @@ class StudentProfilePresenter
 
     }
 
-    public function myProfile($data)
+    public function getMyData($data)
     {
         $result = array();
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            $result[] = (new StudentProfile())->get($data['phone']);
+            $result = (new StudentProfile())->getMyData($userId);
         } else
             $code = 400;
-        $res = array("code" => $code, "data" => $result);
+
+        $res = array("code" => $code);
+        $res['data'] = array(json_encode($result));
         return json_encode($res);
     }
 
     public function downMyImg($data)
     {
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode']))
-            return @file_get_contents("../../../files/img/student/$data[phone].jpg");
-        return @file_get_contents("../../../files/img/student/denied.png");
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode']))
+            return @file_get_contents("../../../files/img/student/$userId.jpg");
+        return @file_get_contents("../../../files/img/denied.png");
 
+    }
+
+    public function downImg($data)
+    {
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode']))
+            if ((new StudentProfile())->checkImgAccess($data['otherId'], $userId))
+                return @file_get_contents("../../../files/img/student/$data[otherId].jpg");
+            else
+                return @file_get_contents("../../../files/img/student/denied.png");
+        return @file_get_contents("../../../files/img/denied.png");
     }
 
     public function upImg($data, $files)
     {
 
         $uploadedFile = $files['img'];
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             if ($uploadedFile->getError() === UPLOAD_ERR_OK) {
                 $code = 100;
-                $uploadedFile->moveTo("../../../files/img/student/". $data['phone'].".jpg");
+                $uploadedFile->moveTo("../../../files/img/student/".$userId.".jpg");
             } else
                 $code = 200;
         } else
@@ -64,9 +77,9 @@ class StudentProfilePresenter
 
     public function saveAboutMe($data)
     {
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            (new StudentProfile())->upDateAboutMe($data['phone'], $data['text']);
+            (new StudentProfile())->upDateAboutMe($userId, $data['text']);
         } else
             $code = 400;
         $res = array("code" => $code);
@@ -75,15 +88,174 @@ class StudentProfilePresenter
 
     public function aboutMe($data)
     {
-        $result = array();
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+        $result = "";
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            $result[] = (new StudentProfile())->getAboutMe($data['phone']);
+            $result = (new StudentProfile())->getAboutMe($userId);
         } else
             $code = 400;
-        $res = array("code" => $code, "data" => $result);
+        $res = array("code" => $code, "data" => array($result));
         return json_encode($res);
     }
 
+    public function elName($data)
+    {
+        $result = 1;
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $code = 100;
+            if ($data['code'] == -1) {
+                $result = (new StudentProfile())->getNameEl($userId);
+            } else {
+                (new StudentProfile())->changeNameEl($userId, $data['code']);
+            }
+        } else
+            $code = 400;
+        $res = array("code" => $code, "data" => array($result));
+        return json_encode($res);
+    }
+
+    public function eLPhone($data)
+    {
+        $result = 1;
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $code = 100;
+            if ($data['code'] == -1) {
+                $result = (new StudentProfile())->getPhoneEl($userId);
+            } else {
+                (new StudentProfile())->changePhoneEl($userId, $data['code']);
+            }
+        } else
+            $code = 400;
+        $res = array("code" => $code, "data" => array($result));
+        return json_encode($res);
+    }
+
+    public function eLImg($data)
+    {
+        $result = 1;
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $code = 100;
+            if ($data['code'] == -1) {
+                $result = (new StudentProfile())->getImgEl($userId);
+            } else {
+                (new StudentProfile())->changeImgEl($userId, $data['code']);
+            }
+        } else
+            $code = 400;
+        $res = array("code" => $code, "data" => array($result));
+        return json_encode($res);
+    }
+
+    public function getFriendList($data)
+    {
+        $code = 100;
+        $friendList = array();
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            if ($friendIdList = (new StudentProfile())->getFriendList($userId)) {
+                $friendIdList = json_decode($friendIdList);
+                foreach ($friendIdList as $id) {
+                    $userName = (new StudentProfile())->getName($id, $userId);
+                    $sId = (new StudentProfile())->getSId($id);
+                    if (strlen($sId) > 0)
+                        $friendList[] = json_encode(array("s_id" => $sId, "user_name" => $userName, "user_id" => $id));
+                }
+            }
+        }
+        return json_encode(array("code" => $code, "data" => $friendList));
+    }
+
+    public function addFriend($data)
+    {
+        $code = 100;
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            if ($lastData = (new StudentProfile())->getFriendList($userId)) {
+                $lastData = json_decode($lastData);
+                if (!(array_search((String)$data['otherId'], $lastData)))
+                    $lastData[] = (String)$data['otherId'];
+                else
+                    $code = 300;
+                $newData = json_encode($lastData);
+            } else
+                $newData = json_encode(array((String)$data['otherId']));
+            if ($code != 300)
+                (new StudentProfile())->upDateFriendList($userId, $newData);
+        } else
+            $code = 400;
+        $res = array("code" => $code);
+        return json_encode($res);
+    }
+
+    public function getChatList($data)
+    {
+        $code = 100;
+        $chatList = array();
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            if ($otherIdList = (new StudentProfile())->getChatList($userId)) {
+                $otherIdList = json_decode($otherIdList);
+                foreach ($otherIdList as $id) {
+                    $userName = (new StudentProfile())->getName($id, $userId);
+                    $sId = (new StudentProfile())->getSId($id);
+                    if (strlen($sId) > 0)
+                        $chatList[] = json_encode(array("s_id" => $sId, "user_name" => $userName, "user_id" => $id));
+                }
+            }
+        }
+        return json_encode(array("code" => $code, "data" => $chatList));
+    }
+
+    public function addChat($user1Id, $user2Id)
+    {
+
+        if ($lastData = (new StudentProfile())->getChatList($user1Id)) {
+            $lastData = json_decode($lastData);
+            $lastData[] = (String)$user2Id;
+            $newData = json_encode($lastData);
+        } else
+            $newData = json_encode(array((String)$user2Id));
+        (new StudentProfile())->upDateChatList($user1Id, $newData);
+
+        if ($lastData = (new StudentProfile())->getChatList($user2Id)) {
+            $lastData = json_decode($lastData);
+            $lastData[] = (String)$user1Id;
+            $newData = json_encode($lastData);
+        } else
+            $newData = json_encode(array((String)$user1Id));
+        (new StudentProfile())->upDateChatList($user2Id, $newData);
+
+    }
+
+    public function getProfile($data)
+    {
+        $phone = "شماره تماس:پنهان شده";
+        $student = array();
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $name = (new StudentProfile())->getName($data['otherId'], $userId);
+            if ((new StudentProfile())->checkPhoneAccess($data['otherId'], $userId))
+                $phone = (new User())->getPhone($data['otherId']);
+            $student = (new StudentProfile())->getData($data['otherId']);
+            $student['user_name'] = $name;
+            $student['phone'] = $phone;
+            $code = 100;
+        } else
+            $code = 400;
+        return json_encode(array("code" => $code, "data" => array(json_encode($student))));
+    }
+
+    public function searchBySId($data)
+    {
+        $list = array();
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $result = (new StudentProfile())->searchBySId($data['key'], $data['step'], $data['num']);
+            while ($row = $result->fetch_assoc()) {
+                $student = array();
+                $student['s_id'] = $row['s_id'];
+                $student['user_name'] = (new StudentProfile())->getName($row['user_id'], $userId);
+                $list[] = json_encode($student);
+            }
+            $code = 100;
+        } else
+            $code = 400;
+        return json_encode(array("code" => $code, "data" => $list));
+    }
 
 }

@@ -22,9 +22,9 @@ $app->post("/sendVerifyCode", function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
-$app->post("/checkVerifyCode", function (Request $req, Response $res) {
+$app->post("/signUp", function (Request $req, Response $res) {
     $data = $req->getParsedBody();
-    $result = (new UserPresenter())->checkVerifyCode($data);
+    $result = (new UserPresenter())->signUp($data);
     $res->getBody()->write($result);
 });
 
@@ -37,6 +37,12 @@ $app->post("/logIn", function (Request $req, Response $res) {
 $app->post("/newPass", function (Request $req, Response $res) {
     $data = $req->getParsedBody();
     $result = (new UserPresenter())->newPass($data);
+    $res->getBody()->write($result);
+});
+
+$app->post("/changePass", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new UserPresenter())->changePass($data);
     $res->getBody()->write($result);
 });
 
