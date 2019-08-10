@@ -51,13 +51,13 @@ class Ability
 
     }
 
-    public function getMySingle($userId, $ability_id):Array
+    public function getMySingle($userId, $ability_id):mysqli_result
     {
         $sql = "SELECT * From $this->tbName t WHERE t.ability_id = ? AND t.user_id = ? AND NOT t.status = 4";
         $result = $this->con->prepare($sql);
         $result->bind_param('ii',$ability_id, $userId);
         $result->execute();
-        $data = $result->get_result()->fetch_assoc();
+        $data = $result->get_result();
         $result->close();
         return $data;
 
@@ -89,6 +89,15 @@ class Ability
         $sql = "UPDATE $this->tbName SET status = ? WHERE ability_id = ? AND user_id = ?";
         $result = $this->con->prepare($sql);
         $result->bind_param('iii', $status, $ability_id, $userId);
+        $result->execute();
+        $result->close();
+    }
+
+    public function seen($ability_id)
+    {
+        $sql = "UPDATE $this->tbName t SET t.seen_num = t.seen_num + 1 WHERE ability_id = ?";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('i', $ability_id);
         $result->execute();
         $result->close();
     }

@@ -71,6 +71,12 @@ $app->post("/addFriend", function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
+$app->post("/deleteFriend", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new StudentProfilePresenter())->deleteFriend($data);
+    $res->getBody()->write($result);
+});
+
 $app->post("/saveAboutMe", function (Request $req, Response $res) {
     $data = $req->getParsedBody();
     $result = (new StudentProfilePresenter())->saveAboutMe($data);

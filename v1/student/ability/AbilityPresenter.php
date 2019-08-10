@@ -47,19 +47,26 @@ class AbilityPresenter
             while ($row = $result->fetch_assoc()) $list[] = json_encode($row);
         } else
             $code = 400;//apiCodeError
-        $res = array("code" => $code, "data" => $list);
-        return json_encode($res);
+
+        return $list;
     }
 
     public function getMySingle($data)
     {
         $result = array();
+        $message = "";
         if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
             $result = (new Ability())->getMySingle($userId, $data['abilityId']);
+            if ($result->num_rows > 0)
+                $result = $result->fetch_assoc();
+            else {
+                $code = 200;
+                $message = "وجود ندارد";
+            }
         } else
             $code = 400;//apiCodeError
-        $res = array("code" => $code, "data" => array(json_encode($result)));
+        $res = array("code" => $code, "data" => array(json_encode($result)), "message" => $message);
         return json_encode($res);
     }
 
@@ -88,11 +95,23 @@ class AbilityPresenter
         return json_encode($res);
     }
 
-    public function changeStatus($data)
+    public function delete($data)
     {
         if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
-            (new Ability())->changeStatus($userId, $data['abilityId'], $data['status']);
+            (new Ability())->changeStatus($userId, $data['abilityId'], 4);
+
+        } else
+            $code = 400;//apiCodeError
+        $res = array("code" => $code);
+        return json_encode($res);
+    }
+
+    public function seen($data)
+    {
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $code = 100;
+            (new Ability())->seen($data['abilityId']);
 
         } else
             $code = 400;//apiCodeError

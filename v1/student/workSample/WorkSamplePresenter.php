@@ -6,8 +6,8 @@
  * Time: 10:47 PM
  */
 
-require "WorkSample.php";
-require "../../user/UserPresenter.php";
+require_once "WorkSample.php";
+require_once "../../user/UserPresenter.php";
 
 class WorkSamplePresenter
 {
@@ -37,7 +37,10 @@ class WorkSamplePresenter
         $list = array();
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $result = (new WorkSample())->getMyList($data['abilityId']);
-            while ($row = $result->fetch_assoc()) $list[] = json_encode($row);
+            while ($row = $result->fetch_assoc()) {
+                $row['like_num'] = $this->likeNum($row['work_sample_id']);
+                $list[] = json_encode($row);
+            }
             $code = 100;
         } else
             $code = 400;
@@ -50,7 +53,10 @@ class WorkSamplePresenter
         $list = array();
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $result = (new WorkSample())->getList($data['abilityId']);
-            while ($row = $result->fetch_assoc()) $list[] = json_encode($row);
+            while ($row = $result->fetch_assoc()) {
+                $row['like_num'] = $this->likeNum($row['work_sample_id']);
+                $list[] = json_encode($row);
+            }
             $code = 100;
         } else
             $code = 400;
@@ -60,8 +66,10 @@ class WorkSamplePresenter
 
     public function getMySingle($data)
     {
+        $result = array();
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $result = (new WorkSample())->getMySingle($data['workSampleId']);
+            $result['like_num'] = $this->likeNum($data['workSampleId']);
             $code = 100;
         } else
             $code = 400;
@@ -71,8 +79,11 @@ class WorkSamplePresenter
 
     public function getSingle($data)
     {
-        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+        $result = array();
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $result = (new WorkSample())->getSingle($data['workSampleId']);
+            $result['like_num'] = $this->likeNum($data['workSampleId']);
+            $result['liked'] = $this->liked($userId, $data['workSampleId']);
             $code = 100;
         } else
             $code = 400;
@@ -80,10 +91,21 @@ class WorkSamplePresenter
         return json_encode($res);
     }
 
-    public function changeStatus($data)
+    public function delete($data)
     {
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
-            (new WorkSample())->changeStatus($data['workSampleId'], $data['status']);
+            (new WorkSample())->changeStatus($data['workSampleId'], 4);
+            $code = 100;
+        } else
+            $code = 400;
+        $res = array("code" => $code);
+        return json_encode($res);
+    }
+
+    public function seen($data)
+    {
+        if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            (new WorkSample())->seen($data['workSampleId']);
             $code = 100;
         } else
             $code = 400;
@@ -102,12 +124,14 @@ class WorkSamplePresenter
     {
         $code = 200;
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
-            $result = (new WorkSample())->edit($data['workSampleId'], $data['subject'], $data['description'], sizeof($files['img']));
+            $result = (new WorkSample())->edit($data['workSampleId'], $data['subject'], $data['description'], sizeof($files['img']), 0);
             if ($result) {
                 $code = 100;
                 $id = $data['workSampleId'];
-                for ($j = 0; $j < 3; $j++)
+                for ($j = 0; $j < 3; $j++) {
+                 if(file_exists("../../../files/img/workSample/" . $id . $j . ".jpg"))
                     unlink("../../../files/img/workSample/" . $id . $j . ".jpg");
+                }
 
                 for ($i = 0; $i < sizeof($files['img']); $i++) {
                     if ($files['img'][$i]->getError() === UPLOAD_ERR_OK)
@@ -119,6 +143,56 @@ class WorkSamplePresenter
             $code = 400;
         $res = array("code" => $code);
         return json_encode($res);
+    }
+
+    public function changeLike($data)
+    {
+        $code = 200;
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $dbResult = (new WorkSample())->getLike($data['workSampleId']);
+            if ($dbResult->num_rows > 0) {
+                $code = 100;
+                $likeList = $dbResult->fetch_assoc()['like_list'];
+                if (strlen($likeList) < 5)
+                    $likeList = "[]";
+                $likeList = json_decode($likeList);
+                $search = array_search((String)$userId, $likeList);
+                if ($search !== false) {
+                    $newData = array();
+                    for ($i = 0; $i < sizeof($likeList); $i++) {
+                        if ($i == $search)
+                            continue;
+                        $newData[] = (String)$likeList[$i];
+                    }
+                    $newData = json_encode($newData);
+                } else {
+                    $likeList[] = (String)$userId;
+                    $newData = json_encode($likeList);
+                }
+                (new WorkSample())->updateLike($data['workSampleId'], $newData);
+
+            }
+        } else
+            $code = 400;
+        return json_encode(array("code" => $code));
+    }
+
+    public function likeNum($workSampleId): int
+    {
+        $dbResult = (new WorkSample())->getLike($workSampleId);
+        if ($dbResult->num_rows > 0) {
+            $likeList = $dbResult->fetch_assoc()['like_list'];
+            if (strlen($likeList) < 5)
+                return 0;
+            $likeList = json_decode($likeList);
+            return sizeof($likeList);
+        }
+        return 0;
+    }
+
+    public function liked($userId, $workSampleId):bool
+    {
+        return ((new WorkSample())->liked($workSampleId, $userId) > 0);
     }
 
 }

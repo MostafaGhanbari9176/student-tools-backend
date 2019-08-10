@@ -27,12 +27,6 @@ $app->post("/getMyList", function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
-$app->post("/getList", function (Request $req, Response $res) {
-    $data = $req->getParsedBody();
-    $result = (new AbilityPresenter())->getList($data);
-    $res->getBody()->write($result);
-});
-
 $app->post("/getMySingle", function (Request $req, Response $res) {
     $data = $req->getParsedBody();
     $result = (new AbilityPresenter())->getMySingle($data);
@@ -51,16 +45,17 @@ $app->post("/editAbility", function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
-$app->post("/changeStatus", function (Request $req, Response $res) {
-    $data = $req->getParsedBody();
-    $result = (new AbilityPresenter())->changeStatus($data);
-    $res->getBody()->write($result);
-});
-
-$app->post("/deleteAbility", function (Request $req, Response $res) {
+$app->post("/delete", function (Request $req, Response $res) {
     $data = $req->getParsedBody();
     $result = (new AbilityPresenter())->delete($data);
     $res->getBody()->write($result);
 });
+
+$app->post("/seen", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new AbilityPresenter())->seen($data);
+    $res->getBody()->write($result);
+});
+
 
 $app->run();

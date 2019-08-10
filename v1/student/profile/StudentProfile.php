@@ -57,10 +57,22 @@ class StudentProfile
         return $data;
     }
 
-    public function checkPhoneAccess($userId, $otherId): String
+    public function checkPhoneAccess($userId, $otherId): bool
     {
         $otherId = '"' . $otherId . '"';
         $sql = "SELECT t.user_name FROM $this->tbName t WHERE t.user_id = ? AND (t.phone_el = 0 OR t.friend_list LIKE '%$otherId%')";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('i', $userId);
+        $result->execute();
+        $data = $result->get_result()->fetch_assoc();
+        $result->close();
+        return $data != null;
+    }
+
+    public function itsFriend($userId, $otherId): bool
+    {
+        $otherId = '"' . $otherId . '"';
+        $sql = "SELECT t.user_name FROM $this->tbName t WHERE t.user_id = ? AND (t.friend_list LIKE '%$otherId%')";
         $result = $this->con->prepare($sql);
         $result->bind_param('i', $userId);
         $result->execute();
