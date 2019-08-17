@@ -647,6 +647,16 @@ function getJDate($next = null)
 
 }
 
+function getAgoDaysJDate($num)
+{
+
+    $numberOfNext = strtotime("-$num days");
+    $date = date("Y-m-d", $numberOfNext);
+    $date = str_split($date);
+    return gregorian_to_jalali($date[0] . $date[1] . $date[2] . $date[3], $date[5] . $date[6], $date[8] . $date[9], '-');
+
+}
+
 //////////////////////////////////////////
 
 /*	F	*/

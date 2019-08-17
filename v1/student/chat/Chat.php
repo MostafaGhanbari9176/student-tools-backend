@@ -26,9 +26,9 @@ class Chat
                  `send_date` varchar(10) NOT NULL,
                  `send_time` varchar(5) NOT NULL,
                  `m_text` varchar(500) NOT NULL,
-                 `m_seen` tinyint(1) NOT NULL DEFAULT '0',
-                 `status` tinyint(1) NOT NULL DEFAULT '0',
-                 `file_id` int(11) NOT NULL,
+                 `status` tinyint(1) NOT NULL DEFAULT '1',
+                 `file_id` int(11) NOT NULL DEFAULT '0',
+                 `path_id` int(11) NOT NULL DEFAULT '0',
                  PRIMARY KEY (`m_id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
         $result = $this->con->prepare($sql);
@@ -38,13 +38,13 @@ class Chat
 
     }
 
-    public function saveMessage($user_id, $send_date, $send_time, $m_text, $file_id): bool
+    public function saveMessage($user_id, $send_date, $send_time, $m_text, $file_id, $path_id): bool
     {
         try {
 
-            $sql = "INSERT INTO $this->tbName (user_id, send_date, send_time, m_text, file_id) VALUES (?,?,?,?,?)";
+            $sql = "INSERT INTO $this->tbName (user_id, send_date, send_time, m_text, file_id, path_id) VALUES (?,?,?,?,?,?)";
             $result = $this->con->prepare($sql);
-            $result->bind_param('isssi', $user_id, $send_date, $send_time, $m_text, $file_id);
+            $result->bind_param('isssii', $user_id, $send_date, $send_time, $m_text, $file_id, $path_id);
 
         } catch (Error $e) {
             return false;
@@ -54,12 +54,10 @@ class Chat
         return $data;
     }
 
-    public function getMessageList($step, $num)
+    public function getLastMessage($startDate)
     {
-        $offset = ($step - 1) * $num;
-        $sql = "SELECT t.m_text, t.user_id, t.send_date, t.send_time, t.m_Seen FROM $this->tbName t WHERE t.status = 0 ORDER BY t.m_id DESC LIMIT ?, ?";
+        $sql = "SELECT t.m_id, t.m_text, t.user_id, t.send_date, t.send_time, t.path_id, t.status, t.file_id FROM $this->tbName t WHERE t.send_date > $startDate ORDER BY t.m_id DESC";
         $result = $this->con->prepare($sql);
-        $result->bind_param('ii', $offset, $num);
         $result->execute();
         $data = $result->get_result();
         $result->close();
@@ -67,13 +65,53 @@ class Chat
 
     }
 
-    public function getLastMessage($lastId)
+    public function getOldMessage($lastId)
     {
-        $sql = "SELECT t.m_text, t.user_id, t.send_date, t.send_time, t.m_Seen FROM $this->tbName t WHERE t.status = 0 AND t.m_id > ? ORDER BY t.m_id DESC";
+        $num = 20;
+        $sql = "SELECT t.m_text, t.user_id, t.send_date, t.send_time, t.path_id, t.status, t.file_id FROM $this->tbName t WHERE t.m_id < ? ORDER BY t.m_id DESC LIMIT ?";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('ii', $lastId, $num);
+        $result->execute();
+        $data = $result->get_result();
+        $result->close();
+        return $data;
+
+    }
+
+    public function getNewMessage($lastId)
+    {
+        $sql = "SELECT t.m_id, t.m_text, t.user_id, t.send_date, t.send_time, t.path_id, t.status, t.file_id FROM $this->tbName t WHERE t.m_id > ? ORDER BY t.m_id ASC";
         $result = $this->con->prepare($sql);
         $result->bind_param('i', $lastId);
         $result->execute();
         $data = $result->get_result();
+        $result->close();
+        return $data;
+
+    }
+
+    public function seen($userId):bool
+    {
+        $sql = "UPDATE $this->tbName SET status = 2 WHERE user_id = ?";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('i', $userId);
+        $data = $result->execute();
+        $result->close();
+        return $data;
+
+    }
+
+    public function lastSeenId($userId):int
+    {
+        $sql = "SELECT m_id FROM $this->tbName WHERE user_id = ? AND status = 2 ORDER BY m_id DESC LIMIT 1";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('i', $userId);
+        $result->execute();
+        $data = $result->get_result();
+        if($data->num_rows > 0)
+            $data = $data->fetch_assoc()['m_id'];
+        else
+            $data = -1;
         $result->close();
         return $data;
 

@@ -24,10 +24,11 @@ $app->post("/sendMessage",function (Request $req, Response $res)
     $res->getBody()->write($result);
 });
 
-$app->post("/getMessageList",function (Request $req, Response $res)
+$app->post("/sendFileMessage",function (Request $req, Response $res)
 {
     $data = $req->getParsedBody();
-    $result = (new ChatPresenter())->getMessageList($data);
+    $file = $req->getUploadedFiles();
+    $result = (new ChatPresenter())->sendFileMessage($data, $file);
     $res->getBody()->write($result);
 });
 
@@ -35,6 +36,27 @@ $app->post("/getLastMessage",function (Request $req, Response $res)
 {
     $data = $req->getParsedBody();
     $result = (new ChatPresenter())->getLastMessage($data);
+    $res->getBody()->write($result);
+});
+
+$app->post("/getOldMessage",function (Request $req, Response $res)
+{
+    $data = $req->getParsedBody();
+    $result = (new ChatPresenter())->getOldMessage($data);
+    $res->getBody()->write($result);
+});
+
+$app->post("/getNewMessage",function (Request $req, Response $res)
+{
+    $data = $req->getParsedBody();
+    $result = (new ChatPresenter())->getNewMessage($data);
+    $res->getBody()->write($result);
+});
+
+$app->post("/seen",function (Request $req, Response $res)
+{
+    $data = $req->getParsedBody();
+    $result = (new ChatPresenter())->seen($data);
     $res->getBody()->write($result);
 });
 

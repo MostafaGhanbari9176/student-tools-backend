@@ -220,10 +220,10 @@ class StudentProfilePresenter
             if ($otherIdList = (new StudentProfile())->getChatList($userId)) {
                 $otherIdList = json_decode($otherIdList);
                 foreach ($otherIdList as $id) {
-                    $userName = (new StudentProfile())->getName($id, $userId);
+                    $userName = /*(new StudentProfile())->getName($id, $userId)*/"empty";
                     $sId = (new StudentProfile())->getSId($id);
                     if (strlen($sId) > 0)
-                        $chatList[] = json_encode(array("s_id" => $sId, "user_name" => $userName, "user_id" => $id));
+                        $chatList[] = json_encode(array("s_id" => $sId, "user_name" => $userName, "user_id" => $id, "message"=>""));
                 }
             }
         }
