@@ -7,19 +7,20 @@
  */
 
 require_once 'FileModel.php';
-require_once "../user/UserPresenter.php";
+require_once dirname(__FILE__, 2) . "/user/UserPresenter.php";
 
 class FilePresenter
 {
 
     public function download($data)
     {
+        $p = dirname(__FILE__, 3);
 
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $fileData = (new FileModel())->getData($data['fileId']);
-            return @file_get_contents("../../../files/chat/".$fileData['dir_name']."/".$data['fileId'].".".$fileData['f_type']);
+            return @file_get_contents("$p/files/chat/" . $fileData['dir_name'] . "/" . $data['fileId'] . "." . $fileData['f_type']);
         }
-        return @file_get_contents("../../files/img/denied.png");
+        return @file_get_contents("$p/files/img/denied.png");
 
     }
 
@@ -29,36 +30,40 @@ class FilePresenter
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $fileType = (new FileModel())->getData($data['fileId'])['f_type'];
             $code = 100;
-        }
-        else
+        } else
             $code = 400;
-        return json_encode(array("code"=>$code, "data"=>array($fileType)));
+        return json_encode(array("code" => $code, "data" => array($fileType)));
 
     }
 
-    public function saveFile($userId, $file, $eyeLevel):int
+    public function saveFile($userId, $file, $eyeLevel): int
     {
-        if($file->getError() !== UPLOAD_ERR_OK)
+        $p = dirname(__FILE__, 3);
+        if ($file->getError() !== UPLOAD_ERR_OK)
             return 0;
         $fName = $file->getClientFileName();
-        if(strpos(pathinfo($fName, PATHINFO_FILENAME), ".") !== false)
+        if (strpos(pathinfo($fName, PATHINFO_FILENAME), ".") !== false)
             return 0;
-        if($file->getSize() > (10485760/*10MB*/))
+        if ($file->getSize() > (10485760/*10MB*/))
             return 0;
         $fileType = pathinfo($fName, PATHINFO_EXTENSION);
-        switch ($fileType)
-        {
+        switch (strtolower($fileType)) {
             case 'jpg';
-            case 'JPG':$dirName = "img";
-            break;
-            case 'pdf';
-            case 'PDF':$dirName = "document";
-            break;
-            default:$dirName = "other";
+            case 'png':
+                $dirName = "img";
+                break;
+            case 'pdf':
+                $dirName = "document";
+                break;
+            case 'mp3':
+                $dirName = "music";
+                break;
+            default:
+                $dirName = "other";
         }
-        (new FileModel())->saveFile($userId, getJDate(), Date("H:i"),$dirName, $eyeLevel, $fileType);
+        (new FileModel())->saveFile($userId, getJDate(), Date("H:i"), $dirName, $eyeLevel, $fileType);
         $fileId = (new FileModel())->getLastId($userId);
-        $file->moveTo("../../../files/chat/".$dirName."/".$fileId.".".$fileType);
+        $file->moveTo("$p/files/chat/" . $dirName . "/" . $fileId . "." . $fileType);
         return $fileId;
     }
 }

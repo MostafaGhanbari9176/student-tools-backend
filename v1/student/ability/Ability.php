@@ -102,4 +102,17 @@ class Ability
         $result->close();
     }
 
+    public function search($key, $step, $num)
+    {
+        $offset = ($step-1)*$num;
+        $key = "%$key%";
+        $sql = "SELECT t.subject, t.user_id, t.description FROM $this->tbName t WHERE t.subject LIKE ? LIMIT ?, ?";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('sii', $key, $offset, $num);
+        $result->execute();
+        $data = $result->get_result();
+        $result->close();
+        return $data;
+    }
+
 }

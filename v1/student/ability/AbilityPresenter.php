@@ -119,4 +119,16 @@ class AbilityPresenter
         return json_encode($res);
     }
 
+    public function search($data){
+
+        $list = array();
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $result = (new Ability())->search($data['key'], $data['step'], $data['num']);
+            while ($row = $result->fetch_assoc()) $list[] = json_encode($row);
+            $code = 100;
+        } else
+            $code = 400;
+        return json_encode(array("code" => $code, "data" => $list));
+    }
+
 }

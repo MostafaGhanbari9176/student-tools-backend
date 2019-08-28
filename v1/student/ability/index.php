@@ -57,5 +57,11 @@ $app->post("/seen", function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
+$app->post("/search", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new AbilityPresenter())->search($data);
+    $res->getBody()->write($result);
+});
+
 
 $app->run();

@@ -28,4 +28,9 @@ $app->post('/getType', function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
+$app->get('/test', function (Request $req, Response $res) {
+    $result = dirname(__FILE__);
+    $res->getBody()->write($result);
+});
+
 $app->run();

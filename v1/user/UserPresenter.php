@@ -41,7 +41,17 @@ class UserPresenter
             $apiCode = $this->createApiCode();
             $result = (new User())->add($data['phone'], $apiCode, $data['kind'], getJDate());
             if (!$result)
-                $code = 300; //badLogSign
+            {
+                $result = (new User())->getPass($data['phone']);
+                if($result->num_rows > 0) {
+                    $result = $result->fetch_assoc()['pass'];
+                    if($result === null)
+                        (new User())->upDateApiCode($data['phone'], $apiCode);
+                    else
+                        $code = 300; //badLogSign
+                }
+            }
+
         }
         $res = array("code" => $code, "data" => array($apiCode));
         return json_encode($res);
@@ -49,7 +59,7 @@ class UserPresenter
 
     public function logIn($data)
     {
-        $result = array();
+        $result = "";
         $code = 200;
         if ($passFromDb = (new User())->getPass($data['phone'])) {
             $passFromDb = $passFromDb->fetch_assoc()['pass'];
@@ -57,12 +67,12 @@ class UserPresenter
                 $code = 100;
                 $apiCode = $this->createApiCode();
                 (new User())->upDateApiCode($data['phone'], $apiCode);
-                $result = (new User())->get($data['phone']);
+                $result = json_encode((new User())->get($data['phone']));
             }
         } else
             $code = 300;
 
-        $res = array("code" => $code, "data" => array(json_encode($result)));
+        $res = array("code" => $code, "data" => array($result));
         return json_encode($res);
     }
 
