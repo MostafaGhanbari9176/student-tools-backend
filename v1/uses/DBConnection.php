@@ -23,8 +23,8 @@ class DBConnection
             echo "Failed to connect to MySQL: " . mysqli_connect_error();
         }
         // returning connection resource
-        mysqli_query($this->conn, "SET NAMES 'utf8'");
-        mysqli_set_charset($this->conn, "UTF8");
+        mysqli_query($this->conn, "SET NAMES 'utf8mb4'");
+        mysqli_set_charset($this->conn, "utf8mb4");
         return $this->conn;
     }
 }

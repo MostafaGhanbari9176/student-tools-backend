@@ -7,7 +7,7 @@
  */
 
 require_once "Ability.php";
-require_once "../../user/UserPresenter.php";
+require_once dirname(__FILE__)."/../../user/UserPresenter.php";
 
 class AbilityPresenter
 {

@@ -10,8 +10,9 @@ use Slim\Http\UploadedFile;
  */
 
 require_once "StudentProfile.php";
-require_once "../../user/UserPresenter.php";
-require_once "../ability/AbilityPresenter.php";
+require_once dirname(__FILE__) . "/../../user/UserPresenter.php";
+require_once dirname(__FILE__) . "/../ability/AbilityPresenter.php";
+require_once dirname(__FILE__) . "/../../chat/groupChat/GroupChat.php";
 
 class StudentProfilePresenter
 {
@@ -53,8 +54,8 @@ class StudentProfilePresenter
     public function downImg($data)
     {
         if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode']))
-            if ((new StudentProfile())->checkImgAccess($data['otherId'], $userId))
-                return @file_get_contents("../../../files/img/student/$data[otherId].jpg");
+            if ((new StudentProfile())->checkImgAccess($data['imgId'], $userId))
+                return @file_get_contents("../../../files/img/student/$data[imgId].jpg");
             else
                 return @file_get_contents("../../../files/img/student/denied.png");
         return @file_get_contents("../../../files/img/denied.png");
@@ -193,7 +194,7 @@ class StudentProfilePresenter
             if ($lastData = (new StudentProfile())->getFriendList($userId)) {
                 $lastData = json_decode($lastData);
                 $index = array_search($data['otherId'], $lastData);
-                if($index !== false) {
+                if ($index !== false) {
                     $newData = array();
                     for ($i = 0; $i < sizeof($lastData); $i++) {
                         if ($i == $index)
@@ -215,35 +216,56 @@ class StudentProfilePresenter
     public function getChatList($data)
     {
         $code = 100;
-        $chatList = array();
+        $singleNum = 0;
+        $chatLists = array();
         if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
-            if ($otherIdList = (new StudentProfile())->getChatList($userId)) {
-                $otherIdList = json_decode($otherIdList);
-                foreach ($otherIdList as $id) {
-                    $userName = /*(new StudentProfile())->getName($id, $userId)*/"empty";
-                    $sId = (new StudentProfile())->getSId($id);
-                    if (strlen($sId) > 0)
-                        $chatList[] = json_encode(array("s_id" => $sId, "user_name" => $userName, "user_id" => $id, "message"=>""));
+            if ($allChatsId = (new StudentProfile())->getAllChatList($userId)) {
+
+                $singleIdList = implode(',', array_map('intval', json_decode($allChatsId['chat_list']) ?: array("-1")));
+                $groupIdList = implode(',', array_map('intval', json_decode($allChatsId['group_list']) ?: array("-1")));
+
+                $result = (new StudentProfile())->getManySId($singleIdList);
+                while ($row = $result->fetch_assoc()) {
+                    $singleNum++;
+                    $chatList = array();
+                    $chatList['chat_id'] = $row['user_id'];
+                    $chatList['chat_subject'] = $row['s_id'];
+                    $chatList['kind_id'] = "s";
+                    $chatLists[] = json_encode($chatList);
                 }
+
+                $result = (new GroupChat())->getManyId($groupIdList);
+                while ($row = $result->fetch_assoc()) {
+                    $chatList = array();
+                    $chatList['chat_id'] = $row['g_id'];
+                    $chatList['chat_subject'] = $row['g_name'];
+                    $chatList['kind_id'] = "g";
+                    $chatLists[] = json_encode($chatList);
+                }
+
             }
-        }
-        return json_encode(array("code" => $code, "data" => $chatList));
+        } else
+            $code = 400;
+        array_unshift($chatLists, (String)$singleNum);
+        return json_encode(array("code" => $code, "data" => $chatLists));
     }
 
     public function addChat($user1Id, $user2Id)
     {
 
-        if ($lastData = (new StudentProfile())->getChatList($user1Id)) {
+        if (($lastData = (new StudentProfile())->getChatList($user1Id)) !== false) {
             $lastData = json_decode($lastData);
-            $lastData[] = (String)$user2Id;
+            if (array_search((String)$user2Id, $lastData) === false)
+                $lastData[] = (String)$user2Id;
             $newData = json_encode($lastData);
         } else
             $newData = json_encode(array((String)$user2Id));
         (new StudentProfile())->upDateChatList($user1Id, $newData);
 
-        if ($lastData = (new StudentProfile())->getChatList($user2Id)) {
+        if (($lastData = (new StudentProfile())->getChatList($user2Id)) !== false) {
             $lastData = json_decode($lastData);
-            $lastData[] = (String)$user1Id;
+            if (array_search((String)$user1Id, $lastData) === false)
+                $lastData[] = (String)$user1Id;
             $newData = json_encode($lastData);
         } else
             $newData = json_encode(array((String)$user1Id));
@@ -289,5 +311,76 @@ class StudentProfilePresenter
             $code = 400;
         return json_encode(array("code" => $code, "data" => $list));
     }
+
+    public function addToGroupChat($userId, $groupId)
+    {
+        if ($lastData = (new StudentProfile())->getGroupList($userId)) {
+            $lastData = json_decode($lastData);
+            if ((array_search((String)$groupId, $lastData)) === false)
+                $lastData[] = (String)$groupId;
+            $newData = json_encode($lastData);
+        } else
+            $newData = json_encode(array((String)$groupId));
+        (new StudentProfile())->upDateGroupList($userId, $newData);
+    }
+
+    public function removeFromGroupChat($userId, $groupId)
+    {
+        if ($lastData = (new StudentProfile())->getGroupList($userId)) {
+            $lastData = json_decode($lastData);
+            if (($index = array_search((String)$groupId, $lastData)) !== false)
+                unset($lastData[$index]);
+            $newData = json_encode($lastData);
+            (new StudentProfile())->upDateGroupList($userId, $newData);
+        }
+    }
+
+    public function changeOnline($data, $value)
+    {
+        $code = 200;
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            (new StudentProfile())->changeOnline($userId, $value, getJDate(), Date("H:i"));
+            $code = 100;
+        } else
+            $code = 400;
+        return json_encode(array("code" => $code));
+    }
+
+    public function getLastSeen($data)
+    {
+        $message = "";
+        $code = 200;
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            $result = (new StudentProfile())->getLastSeen($data['otherId']);
+            if ($result !== false) {
+                if ($result['on_line'] == 1)
+                    $message = "online";
+                else
+                    $message = $result['last_time'] . " " . $result['last_date'];
+                $code = 100;
+            } else
+                $message = "offline";
+
+        } else
+            $code = 400;
+
+        return json_encode(array("code" => $code, "message" => $message));
+    }
+
+    public function itsFriend($data)
+    {
+        $message = "";
+        if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
+            if ((new StudentProfile())->itsFriend($userId, $data['otherId']))
+                $message = "1";
+            else
+                $message = "0";
+            $code = 100;
+        } else
+            $code = 400;
+
+        return json_encode(array("code" => $code, "message" => $message));
+    }
+
 
 }

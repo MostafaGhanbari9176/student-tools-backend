@@ -42,6 +42,7 @@ class WorkSample
         $result = $this->con->prepare($sql);
         $result->bind_param('i', $abilityId);
         $result->execute();
+        $result->error;
         $data = $result->get_result()->fetch_assoc()['work_sample_id'];
         $result->close();
         return $data;

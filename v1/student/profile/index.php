@@ -14,7 +14,13 @@ require "../../uses/jdf.php";
 use \Slim\Http\Request;
 use \Slim\Http\Response;
 
-$app = new \Slim\App();
+$configuration = [
+    'settings' => [
+        'displayErrorDetails' => true,
+    ],
+];
+$c = new \Slim\Container($configuration);
+$app = new \Slim\App($c);
 
 $app->post("/addStudent", function (Request $req, Response $res) {
     $data = $req->getParsedBody();
@@ -34,16 +40,18 @@ $app->post("/getProfile", function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
-$app->post("/downMyImg", function (Request $req, Response $res) {
-    $data = $req->getParsedBody();
+$app->get("/downMyImg", function (Request $req, Response $res) {
+    $data = $req->getQueryParams();
     $result = (new StudentProfilePresenter())->downMyImg($data);
     $res->getBody()->write($result);
+    return $res->withHeader("Content-Type","image/jpeg");
 });
 
-$app->post("/downImg", function (Request $req, Response $res) {
-    $data = $req->getParsedBody();
+$app->get("/downImg", function (Request $req, Response $res) {
+    $data = $req->getQueryParams();
     $result = (new StudentProfilePresenter())->downImg($data);
     $res->getBody()->write($result);
+    return $res->withHeader('Content-Type', 'image/jpeg');
 });
 
 $app->post("/upMyImg", function (Request $req, Response $res) {
@@ -111,6 +119,34 @@ $app->post("/searchStudentById", function (Request $req, Response $res) {
     $data = $req->getParsedBody();
     $result = (new StudentProfilePresenter())->searchBySId($data);
     $res->getBody()->write($result);
+});
+
+$app->post("/online", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new StudentProfilePresenter())->changeOnline($data, 1);
+    $res->getBody()->write($result);
+});
+
+$app->post("/offline", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new StudentProfilePresenter())->changeOnline($data, 0);
+    $res->getBody()->write($result);
+});
+
+$app->post("/lastSeen", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new StudentProfilePresenter())->getLastSeen($data);
+    $res->getBody()->write($result);
+});
+
+$app->post("/itsFriend", function (Request $req, Response $res) {
+    $data = $req->getParsedBody();
+    $result = (new StudentProfilePresenter())->itsFriend($data);
+    $res->getBody()->write($result);
+});
+
+$app->get("/test", function (Request $req, Response $res) {
+var_dump($req->getQueryParams());
 });
 
 $app->run();

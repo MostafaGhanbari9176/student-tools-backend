@@ -107,8 +107,10 @@ class UserPresenter
 
     public function checkApiCode($phone, $apiCode)
     {
-        if($result = (new User())->getUserId($phone, $apiCode))
-            $result = $result->fetch_assoc()['user_id'];
+        $user = (new User())->getUserId($phone, $apiCode);
+        $result = $user->num_rows > 0;
+        if($result)
+            $result = $user->fetch_assoc()['user_id'];
         return $result;
     }
 
