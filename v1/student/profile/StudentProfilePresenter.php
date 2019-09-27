@@ -255,7 +255,7 @@ class StudentProfilePresenter
 
         if (($lastData = (new StudentProfile())->getChatList($user1Id)) !== false) {
             $lastData = json_decode($lastData);
-            if (array_search((String)$user2Id, $lastData) === false)
+            if (array_search((String)$user2Id, $lastData ?: array()) === false)
                 $lastData[] = (String)$user2Id;
             $newData = json_encode($lastData);
         } else
@@ -264,7 +264,7 @@ class StudentProfilePresenter
 
         if (($lastData = (new StudentProfile())->getChatList($user2Id)) !== false) {
             $lastData = json_decode($lastData);
-            if (array_search((String)$user1Id, $lastData) === false)
+            if (array_search((String)$user1Id, $lastData ?: array()) === false)
                 $lastData[] = (String)$user1Id;
             $newData = json_encode($lastData);
         } else

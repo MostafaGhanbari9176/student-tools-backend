@@ -48,10 +48,11 @@ $app->post("/getSingle", function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
-$app->post("/img", function (Request $req, Response $res) {
-    $data = $req->getParsedBody();
+$app->get("/img", function (Request $req, Response $res) {
+    $data = $req->getQueryParams();
     $result = (new WorkSamplePresenter())->getImg($data);
     $res->getBody()->write($result);
+    return $res->withHeader("Content-Type", "image/jpg");
 });
 
 $app->post("/edit", function (Request $req, Response $res) {

@@ -76,6 +76,8 @@ class AbilityPresenter
         if ((new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
             $result = (new Ability())->getSingle($data['abilityId']);
+            if(sizeOf($result) == 0)
+            $code = 200;
         } else
             $code = 400;//apiCodeError
         $res = array("code" => $code, "data" => array(json_encode($result)));

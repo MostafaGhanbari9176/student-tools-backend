@@ -7,7 +7,7 @@
  */
 
 require_once 'DBConf.php';
-header('Content-Type: text/html; charset=utf-8');
+header('Content-Type: text/html; charset=utf8mb4');
 
 class DBConnection
 {

@@ -13,7 +13,12 @@ require "../../uses/jdf.php";
 use Slim\Http\Request;
 use Slim\Http\Response;
 
-$app = new \Slim\App();
+$c = [
+    'settings' => [
+        'displayErrorDetails' => true,
+    ],
+];
+$app = new \Slim\App($c);
 
 $app->post("/addAbility", function (Request $req, Response $res) {
     $data = $req->getParsedBody();

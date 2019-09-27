@@ -1,8 +1,8 @@
-Order allow,deny
-Deny from all
-<FilesMatch index\.php>
-        Allow from all
-</FilesMatch>
+#Order allow,deny
+#Deny from all
+#<FilesMatch index\.php>
+#        Allow from all
+#</FilesMatch>
 #php_flag display_startup_errors off
 #php_flag display_errors off
 #php_flag html_errors off

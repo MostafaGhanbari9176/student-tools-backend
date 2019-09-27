@@ -139,7 +139,7 @@ class GroupChat
         $result->bind_param('i', $groupId);
         $result->execute();
         $data = $result->get_result();
-        if($data->num_rows >0)
+        if($data->num_rows > 0)
             $data = $data->fetch_assoc()['g_name'];
         else
             $data = "";

@@ -45,11 +45,11 @@ class Invite
     public function getGroupId($userId, $inviteId, $checkExpired = false)
     {
         if($checkExpired)
-        $sql = "SELECT group_id FROM $this->tbName WHERE user_id = ? AND i_id = ? AND expired = 0";
+        $sql = "SELECT group_id FROM $this->tbName WHERE (user_id = ? || owner_id = ?) AND i_id = ? AND expired = 0";
         else
-        $sql = "SELECT group_id FROM $this->tbName WHERE user_id = ? AND i_id = ?";
+        $sql = "SELECT group_id FROM $this->tbName WHERE (user_id = ? || owner_id = ?) AND i_id = ?";
         $result = $this->con->prepare($sql);
-        $result->bind_param('ii',$userId, $inviteId);
+        $result->bind_param('iii',$userId,$userId, $inviteId);
         $result->execute();
         $data = $result->get_result();
         if($data -> num_rows > 0)

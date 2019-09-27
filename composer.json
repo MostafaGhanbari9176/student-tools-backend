@@ -3,6 +3,8 @@
         "slim/slim": "^3.12",
         "ext-fileinfo": "*",
         "ext-json": "*",
-        "ext-mysqli": "*"
+        "ext-mysqli": "*",
+        "ext-dom": "*";
+        "ext-libxml": "*"
     }
 }

@@ -23,10 +23,11 @@ $app->post("/add", function (Request $req, Response $res) {
     $res->getBody()->write($result);
 });
 
-$app->post("/img", function (Request $req, Response $res) {
-    $data = $req->getParsedBody();
+$app->get("/img", function (Request $req, Response $res) {
+    $data = $req->getQueryParams();
     $result = (new BlogPresenter())->getImg($data);
     $res->getBody()->write($result);
+    return $res->withHeader("Content-Type", "image/jpg");
 });
 
 $app->post("/addWImg", function (Request $req, Response $res) {

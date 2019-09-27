@@ -2,15 +2,15 @@
 /**
  * Created by PhpStorm.
  * User: Mostafa
- * Date: 14/09/2019
- * Time: 04:57 PM
+ * Date: 15/09/2019
+ * Time: 02:41 AM
  */
 
-class Ads
+class News
 {
-
-    private $adsTable = "ads_table";
-    private $groupTable = "ads_group";
+    private $newsTable = "news_table";
+    private $groupTable = "news_group";
+    private $agencyTable = "news_agency";
     private $con;
 
     public function __construct()
@@ -20,7 +20,6 @@ class Ads
 
     public function getGroupList(): mysqli_result
     {
-
         $sql = "SELECT * FROM $this->groupTable";
         $result = $this->con->prepare($sql);
         $result->execute();
@@ -32,7 +31,7 @@ class Ads
     public function getByGroupId($groupId, $num, $step)
     {
         $offset = ($step - 1) * $num;
-        $sql = "SELECT a_id, a_sub, a_date, store_name, seen, group_id FROM $this->adsTable WHERE group_id = ? LIMIT ?,?";
+        $sql = "SELECT n_id, n_sub, n_date, lead, agency_id, group_id, status, seen FROM $this->newsTable WHERE group_id = ? AND status = 0 ORDER BY n_id DESC LIMIT ?,?";
         $result = $this->con->prepare($sql);
         $result->bind_param('iii', $groupId, $offset, $num);
         $result->execute();
@@ -41,33 +40,33 @@ class Ads
         return $data;
     }
 
-    public function get($adsId)
+    public function get($newsId)
     {
-        $sql = "SELECT * FROM $this->adsTable WHERE a_id = ?";
+        $sql = "SELECT * FROM $this->newsTable WHERE n_id = ?";
         $result = $this->con->prepare($sql);
-        $result->bind_param('i', $adsId);
+        $result->bind_param('i', $newsId);
         $result->execute();
         $data = $result->get_result();
         if ($data->num_rows > 0)
             $data = $data->fetch_assoc();
         else
             $data = false;
-        $this->incrementSeen($adsId);
+        $this->incrementSeen($newsId);
         return $data;
     }
 
-    public function incrementSeen($adsId)
+    public function incrementSeen($newsId)
     {
-        $sql = "UPDATE $this->adsTable SET seen = seen+1 WHERE a_id = ?";
+        $sql = "UPDATE $this->newsTable SET seen = seen+1 WHERE n_id = ?";
         $result = $this->con->prepare($sql);
-        $result->bind_param('i', $adsId);
+        $result->bind_param('i', $newsId);
         $result->execute();
         $result->close();
     }
 
     public function getSpecial(): mysqli_result
     {
-        $sql = "SELECT a_id, a_sub FROM $this->adsTable WHERE special = 1 ORDER BY a_id DESC LIMIT 10";
+        $sql = "SELECT n_id, n_sub, agency_id FROM $this->newsTable WHERE status = 1 OR status = 2 ORDER BY n_id DESC LIMIT 10";
         $result = $this->con->prepare($sql);
         $result->execute();
         $data = $result->get_result();
@@ -75,13 +74,28 @@ class Ads
         return $data;
     }
 
-    public function getByFieldId($fieldId, $lastId, $date)
+    public function getAgencyList(): mysqli_result
+
     {
-        $sql = "SELECT a_id, a_sub, a_date, store_name, seen, group_id FROM $this->adsTable WHERE $fieldId = ? AND a_id > ? AND a_date > ?";
+        $sql = "SELECT a_id, a_sub FROM $this->agencyTable";
         $result = $this->con->prepare($sql);
-        $result->bind_param('iis', $fieldId, $lastId, $date);
         $result->execute();
         $data = $result->get_result();
+        $result->close();
+        return $data;
+    }
+
+    public function getAgencyData($agencyId)
+    {
+        $sql = "SELECT * FROM $this->agencyTable WHERE a_id = ?";
+        $result = $this->con->prepare($sql);
+        $result->bind_param('i', $agencyId);
+        $result->execute();
+        $data = $result->get_result();
+        if ($data->num_rows > 0)
+            $data = $data->fetch_assoc();
+        else
+            $data = false;
         $result->close();
         return $data;
     }

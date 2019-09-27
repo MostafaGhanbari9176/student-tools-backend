@@ -69,7 +69,11 @@ class Ability
         $result = $this->con->prepare($sql);
         $result->bind_param('i',$ability_id );
         $result->execute();
-        $data = $result->get_result()->fetch_assoc();
+        $data = $result->get_result();
+        if($data -> num_rows > 0)
+        $data = $data->fetch_assoc();
+        else
+        $data = array();
         $result->close();
         return $data;
 
@@ -106,7 +110,7 @@ class Ability
     {
         $offset = ($step-1)*$num;
         $key = "%$key%";
-        $sql = "SELECT t.subject, t.user_id, t.description FROM $this->tbName t WHERE t.subject LIKE ? LIMIT ?, ?";
+        $sql = "SELECT t.subject, t.user_id, t.description, t.ability_id FROM $this->tbName t WHERE status = 1 AND t.subject LIKE ? LIMIT ?, ?";
         $result = $this->con->prepare($sql);
         $result->bind_param('sii', $key, $offset, $num);
         $result->execute();

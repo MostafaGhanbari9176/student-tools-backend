@@ -133,7 +133,7 @@ class ChatPresenter
                 $messageList = array();
                 while ($row = $result->fetch_assoc()) {
                     $row['its_my'] = $userId == $row['user_id'];
-                    if($row['i_id'] != 0)
+                    if($row['i_id'] !== 0)
                     {
                         $gId = (new Invite())->getGroupId($userId, $row['i_id']);
                         $row['m_text'] = (new GroupChat())->getName($gId);
