@@ -13,15 +13,17 @@ require_once "StudentProfile.php";
 require_once dirname(__FILE__) . "/../../user/UserPresenter.php";
 require_once dirname(__FILE__) . "/../ability/AbilityPresenter.php";
 require_once dirname(__FILE__) . "/../../chat/groupChat/GroupChat.php";
+require_once dirname(__FILE__) . "/../studentField/StudentFiled.php";
 
 class StudentProfilePresenter
 {
     public function add($data)
     {
         if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
-            $code = 100;
-            (new StudentProfile())->add($data['sId'], $userId, $data['user_name'], getJDate(), Date("H:i"));
-            (new UserPresenter())->changePass($data);
+            if ((new StudentProfile())->add($data['sId'], $userId, $data['user_name'], getJDate(), Date("H:i"), $data['email'], $data['fieldId'])) {
+                $code = 100;
+                (new UserPresenter())->changePass($data);
+            }
         } else
             $code = 400;
         $res = array("code" => $code);
@@ -35,6 +37,7 @@ class StudentProfilePresenter
         if ($userId = (new UserPresenter())->checkApiCode($data['phone'], $data['apiCode'])) {
             $code = 100;
             $result = (new StudentProfile())->getMyData($userId);
+            $result['fieldName'] = (new StudentFiled())->getName($result['field_id']);
         } else
             $code = 400;
 
@@ -287,6 +290,7 @@ class StudentProfilePresenter
                 $phone = (new User())->getPhone($data['otherId']);
             $student['user_name'] = $name;
             $student['phone'] = $phone;
+            $student['fieldName'] = (new StudentFiled())->getName($student['field_id']);
             $ability = (new AbilityPresenter())->getList($data);
             $code = 100;
         } else

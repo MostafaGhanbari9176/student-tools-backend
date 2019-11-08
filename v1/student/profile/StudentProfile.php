@@ -20,11 +20,11 @@ class StudentProfile
         $this->con = (new DBConnection())->connect();
     }
 
-    public function add($sId, $userId, $name, $last_date, $last_time): bool
+    public function add($sId, $userId, $name, $last_date, $last_time, $email, $fieldId): bool
     {
-        $sql = "INSERT INTO $this->tbName (s_id, user_id, user_name, last_date, last_time) VALUES (?,?,?,?,?)";
+        $sql = "INSERT INTO $this->tbName (s_id, user_id, user_name, last_date, last_time, email, field_id) VALUES (?,?,?,?,?,?,?)";
         $result = $this->con->prepare($sql);
-        $result->bind_param('sisss', $sId, $userId, $name, $last_date, $last_time);
+        $result->bind_param('sissssi', $sId, $userId, $name, $last_date, $last_time, $email, $fieldId);
         $data = $result->execute();
         $result->close();
         return $data;
@@ -33,7 +33,7 @@ class StudentProfile
 
     public function getMyData($userId): Array
     {
-        $sql = "SELECT t.user_name , t.s_id FROM $this->tbName t WHERE t.user_id = ?";
+        $sql = "SELECT t.user_name , t.s_id, t.email, t.field_id FROM $this->tbName t WHERE t.user_id = ?";
         $result = $this->con->prepare($sql);
         $result->bind_param('i', $userId);
         $result->execute();
@@ -263,7 +263,7 @@ class StudentProfile
 
     public function getData($userId): Array
     {
-        $sql = "SELECT t.s_id , t.email , t.about_me , t.last_date , t.last_time FROM $this->tbName t WHERE t.user_id = ?";
+        $sql = "SELECT t.s_id , t.email , t.about_me , t.last_date , t.last_time, field_id FROM $this->tbName t WHERE t.user_id = ?";
         $result = $this->con->prepare($sql);
         $result->bind_param('i', $userId);
         $result->execute();
@@ -350,7 +350,7 @@ class StudentProfile
         $count = 1;
         //$Reader = $Reader->SharedStringCache;
         foreach ($Reader as $Row) {
-            $this->add($Row[4], $count++, $Row[2] . " " . $Row[3], "1397-02-05", "20:25");
+            //$this->add($Row[4], $count++, $Row[2] . " " . $Row[3], "1397-02-05", "20:25");
         }
     }
 

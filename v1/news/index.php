@@ -14,11 +14,7 @@ require "../uses/jdf.php";
 require "../uses/DBConnection.php";
 require "NewsPresenter.php";
 
-$c = [
-    'settings' => [
-        'displayErrorDetails' => true,
-    ],
-];
+$c = ['settings' => ['displayErrorDetails' => true,],];
 $app = new \Slim\App($c);
 
 $app->post('/getFirstData', function (Request $req, Response $res){

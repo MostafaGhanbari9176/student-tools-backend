@@ -10,6 +10,7 @@ require_once dirname(__FILE__) . "/../Chat.php";
 require_once "GroupChat.php";
 require_once dirname(__FILE__) . "/../../user/UserPresenter.php";
 require_once dirname(__FILE__) . "/../../student/profile/StudentProfilePresenter.php";
+require_once dirname(__FILE__) . "/../../student/profile/StudentProfile.php";
 require_once dirname(__FILE__) . "/../../file/FilePresenter.php";
 
 class GroupChatPresenter
@@ -248,7 +249,8 @@ class GroupChatPresenter
 
                 $messageList = array();
                 while ($row = $result->fetch_assoc()) {
-                    $row['its_my'] = $userId == $row['user_id'];
+                    if (!($row['its_my'] = $userId == $row['user_id']))
+                        $row['user_sub'] = (new StudentProfile())->getSId($row['user_id']);
                     $messageList[] = $row;
                 }
                 $chatRes['messageList'] = $messageList;
